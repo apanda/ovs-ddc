@@ -495,12 +495,21 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 	int prev_port = -1;
 	const struct nlattr *a;
 	int rem;
-
+    bool vlan_tx_tag = vlan_tx_tag_present(skb);
+    int err = 0;
+    if (vlan_tx_tag) {
+        pr_info("VLAN TX tag present. %d\n", vlan_tx_tag_get(skb));
+    }
+    else {
+        uint32_t num = 1;
+        pr_info("No VLAN TX tag. %d\n", vlan_tx_tag_present(skb));
+    }
+    err = 0;
 	for (a = attr, rem = len; rem > 0;
 	     a = nla_next(a, &rem)) {
-		int err = 0;
 
 		if (prev_port != -1) {
+            pr_info("Outputting. %d\n", vlan_tx_tag_get(skb));
 			do_output(dp, skb_clone(skb, GFP_ATOMIC), prev_port);
 			prev_port = -1;
 		}
@@ -543,6 +552,7 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 		if (keep_skb)
 			skb = skb_clone(skb, GFP_ATOMIC);
 
+        pr_info("Outputting. %d\n", vlan_tx_tag_get(skb));
 		do_output(dp, skb, prev_port);
 	} else if (!keep_skb)
 		consume_skb(skb);
